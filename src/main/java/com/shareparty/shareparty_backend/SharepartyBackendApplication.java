@@ -8,6 +8,7 @@ public class SharepartyBackendApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(SharepartyBackendApplication.class, args);
+		System.out.println("hola");
 	}
 
 }
