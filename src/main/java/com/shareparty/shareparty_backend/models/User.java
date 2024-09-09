@@ -29,7 +29,7 @@ import lombok.NoArgsConstructor;
 @Table(name = "users")
 public class User implements UserDetails{
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private int id;
     private String name;
     private String email;
@@ -38,6 +38,37 @@ public class User implements UserDetails{
     @JsonIgnore
     private Set<Party> parties;
 
+    public int getId() {
+        return this.id;
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getEmail() {
+        return this.email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return this.password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -46,6 +77,10 @@ public class User implements UserDetails{
     @Override
     public String getUsername() {
         return this.email;
+    }
+
+    public void setParties(Set<Party> parties){
+        this.parties= parties;
     }
     
 }
