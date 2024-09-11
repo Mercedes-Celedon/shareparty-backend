@@ -33,7 +33,7 @@ This is the backend of the **Party Manager**, a full-stack CRUD application deve
 
 1. Clone the repository:
 
-   ```bash
+   ```powershell
    git clone https://github.com/Mercedes-Celedon/shareparty-backend.git
    ```
 
