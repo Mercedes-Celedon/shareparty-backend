@@ -93,17 +93,29 @@ public class PartyService {
         partyRepository.deleteById(id);
     }
 
-    public Party updateParty(Integer id, Party updateParty){
+    public Party updateParty(Integer id, String title, String location, String description, MultipartFile image, String partyDate, String startTime, String endTime, User user){
+
         Party party= partyRepository.findById(id)
             .orElseThrow(()->new RuntimeException ("Party not found"));
-        
-        party.setTitle(updateParty.getTitle());
-        party.setLocation(updateParty.getLocation());
-        party.setDescription(updateParty.getDescription());
-        party.setImageUrl(updateParty.getImageUrl());
-        party.setPartyDate(updateParty.getPartyDate());
-        party.setStartTime(updateParty.getStartTime());
-        party.setEndTime(updateParty.getEndTime());
+
+        if (image != null && !image.isEmpty()) {
+            @SuppressWarnings("null")
+            String fileName = StringUtils.cleanPath(image.getOriginalFilename());
+            Path imagePath = Paths.get(imagesDirectory + fileName);
+            try {
+                Files.copy(image.getInputStream(), imagePath, StandardCopyOption.REPLACE_EXISTING);
+                String imageUrlString = "http://localhost:3001/images/" + fileName;
+                party.setImageUrl(imageUrlString);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        party.setTitle(party.getTitle());
+        party.setLocation(party.getLocation());
+        party.setDescription(party.getDescription());
+        party.setPartyDate(party.getPartyDate());
+        party.setStartTime(party.getStartTime());
+        party.setEndTime(party.getEndTime());
 
         return partyRepository.save(party);
     }
