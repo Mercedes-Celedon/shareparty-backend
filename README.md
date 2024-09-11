@@ -120,7 +120,7 @@ This project was developed solo over the course of 2 weeks with the goal of buil
 
 ## Author
 
-- **Your Name**  
+- **Mercedes Celedon**  
 - [LinkedIn](https://www.linkedin.com/in/mercedes-celedon-perez/)  
 - [GitHub](https://github.com/Mercedes-Celedon)
 
