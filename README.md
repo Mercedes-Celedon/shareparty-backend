@@ -32,9 +32,13 @@ This is the backend of the **Party Manager**, a full-stack CRUD application deve
 ### Installation
 
 1. Clone the repository:
+
    ```bash
-   git clone https://github.com/your-username/party-manager-backend.git
-   cd party-manager-backend
+   git clone https://github.com/Mercedes-Celedon/shareparty-backend.git
+   ```
+
+   ```bash
+   cd shareparty-backend
    ```
 
 2. Set up the PostgreSQL database:
