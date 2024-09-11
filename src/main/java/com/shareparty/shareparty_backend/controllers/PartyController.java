@@ -21,7 +21,6 @@ import org.springframework.security.core.Authentication;
 
 import java.util.List;
 
-import java.io.IOException;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,11 +32,15 @@ public class PartyController {
     @Autowired
     private final PartyService partyService;
 
+    @Autowired
+    private PartyRepository partyRepository;
+
     @Value("${images.directory}")
     private String imagesDirectory;
 
-    public PartyController(PartyService partyService){
+    public PartyController(PartyService partyService, PartyRepository partyRepository){
         this.partyService=partyService;
+        this.partyRepository=partyRepository;
     }
 
     @GetMapping("/parties")
@@ -50,14 +53,17 @@ public class PartyController {
             @RequestParam("title") String title,
             @RequestParam("location") String location,
             @RequestParam("description") String description,
-            @RequestParam("imageUrl") MultipartFile image) {
+            @RequestParam("imageUrl") MultipartFile image,
+            @RequestParam("partyDate") String partyDate,
+            @RequestParam("startTime") String startTime,
+            @RequestParam("endTime") String endTime) {
         // Obtener el usuario autenticado
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) authentication.getPrincipal();
 
         try {
             // Usamos el servicio para manejar la lógica de negocio
-            Party savedParty = partyService.saveParty(title, location, description, image, user);
+            Party savedParty = partyService.saveParty(title, location, description, image,partyDate,startTime, endTime, user);
 
             // Retornar la fiesta guardada si todo va bien
             return ResponseEntity.ok(savedParty);
@@ -67,10 +73,23 @@ public class PartyController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }        
     }
-    /* @DeleteMapping("/destinations")
+    @DeleteMapping("/parties")
     public ResponseEntity<Void>deletePartyById(@RequestParam("id") int id){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
 
-    } */
+        Party party = partyRepository.findById(id)
+            .orElseThrow(()->new RuntimeException("destino no encontrado"));
+        // Verificar si el usuario autenticado es el creador del destino
+        if (party.getUser().getId() != user.getId()) {
+            // Retornar 403 Forbidden si el usuario autenticado no es el creador
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        // Eliminar el destino si la verificación es exitosa
+        partyService.deletePartyById(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    } 
     @PutMapping("path/{id}")
     public String putMethodName(@PathVariable String id, @RequestBody String entity) {
         //TODO: process PUT request

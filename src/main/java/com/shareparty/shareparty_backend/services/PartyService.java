@@ -1,9 +1,6 @@
 package com.shareparty.shareparty_backend.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -11,7 +8,6 @@ import org.springframework.web.multipart.MultipartFile;
 import com.shareparty.shareparty_backend.models.Party;
 import com.shareparty.shareparty_backend.models.User;
 import com.shareparty.shareparty_backend.repositories.PartyRepository;
-import com.shareparty.shareparty_backend.repositories.UserRepository;
 
 import java.util.Optional;
 
@@ -28,11 +24,9 @@ public class PartyService {
     @Value("${images.directory}")
     private String imagesDirectory;
     private final PartyRepository partyRepository;
-    private final ImageService imageService;
     
-    public PartyService(PartyRepository partyRepository,ImageService imageService) {
+    public PartyService(PartyRepository partyRepository) {
         this.partyRepository = partyRepository;
-        this.imageService = imageService;
     }
 
     public List<Party> getParties(){
@@ -46,7 +40,7 @@ public class PartyService {
       return partyRepository.findById(id);
     }
 
-    public Party saveParty(String title, String location, String description, MultipartFile image, User user) throws IOException {
+    public Party saveParty(String title, String location, String description, MultipartFile image, String partyDate, String startTime, String endTime, User user) throws IOException {
         
         // Aquí manejas la lógica para guardar la imagen en el servidor
         @SuppressWarnings("null")
@@ -68,6 +62,9 @@ public class PartyService {
         party.setLocation(location);
         party.setDescription(description);
         party.setImageUrl(imageUrlString); 
+        party.setPartyDate(partyDate);
+        party.setStartTime(startTime);
+        party.setEndTime(endTime);
         party.setUser(user);
 
         return partyRepository.save(party);
@@ -76,7 +73,23 @@ public class PartyService {
     public void deletePartyById(int id){
         if (!partyRepository.existsById(id)){
             throw new RuntimeException("Party not found");
-        }        
+        } 
+        Party party=partyRepository.findById(id)
+            .orElseThrow(()-> new RuntimeException("Destination not found"));
+            
+        String imageUrl= party.getImageUrl();
+        if (imageUrl != null && !imageUrl.isEmpty()) {
+            // Elimina la imagen del sistema de archivos
+            String fileName = imageUrl.substring(imageUrl.lastIndexOf('/') + 1);
+            Path imagePath = Paths.get(imagesDirectory, fileName);
+
+            try {
+                Files.deleteIfExists(imagePath);
+            } catch (IOException e) {
+                e.printStackTrace();
+                // Opcional: Manejar la excepción adecuadamente, como lanzar una nueva excepción o registrar el error.
+            }
+        }
         partyRepository.deleteById(id);
     }
 
