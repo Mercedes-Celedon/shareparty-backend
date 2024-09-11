@@ -20,10 +20,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.security.core.Authentication;
 
 import java.util.List;
+import java.util.Optional;
 
-import java.io.IOException;
+
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.PathVariable;
 
 
@@ -33,16 +33,30 @@ public class PartyController {
     @Autowired
     private final PartyService partyService;
 
+    @Autowired
+    private PartyRepository partyRepository;
+
     @Value("${images.directory}")
     private String imagesDirectory;
 
-    public PartyController(PartyService partyService){
+    public PartyController(PartyService partyService, PartyRepository partyRepository){
         this.partyService=partyService;
+        this.partyRepository=partyRepository;
     }
 
     @GetMapping("/parties")
     public List<Party> getParties() {
         return partyService.getParties();
+    }
+    @GetMapping("/parties/{id}")
+    public ResponseEntity<Party> getPartyById(@PathVariable("id") int id){
+        Optional<Party> party = partyService.findPartyById(id);
+
+        if (party.isPresent()) {
+            return ResponseEntity.ok(party.get());
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null); // Si no se encuentra, devuelve un 404
+        }
     }
 
     @PostMapping("/parties")
@@ -50,14 +64,17 @@ public class PartyController {
             @RequestParam("title") String title,
             @RequestParam("location") String location,
             @RequestParam("description") String description,
-            @RequestParam("imageUrl") MultipartFile image) {
+            @RequestParam("imageUrl") MultipartFile image,
+            @RequestParam("partyDate") String partyDate,
+            @RequestParam("startTime") String startTime,
+            @RequestParam("endTime") String endTime) {
         // Obtener el usuario autenticado
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User user = (User) authentication.getPrincipal();
 
         try {
             // Usamos el servicio para manejar la lógica de negocio
-            Party savedParty = partyService.saveParty(title, location, description, image, user);
+            Party savedParty = partyService.saveParty(title, location, description, image,partyDate,startTime, endTime, user);
 
             // Retornar la fiesta guardada si todo va bien
             return ResponseEntity.ok(savedParty);
@@ -67,15 +84,71 @@ public class PartyController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }        
     }
-    /* @DeleteMapping("/destinations")
-    public ResponseEntity<Void>deletePartyById(@RequestParam("id") int id){
+    @DeleteMapping("/parties/{id}")
+    public ResponseEntity<Void>deletePartyById(@PathVariable int id){
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
 
-    } */
-    @PutMapping("path/{id}")
-    public String putMethodName(@PathVariable String id, @RequestBody String entity) {
-        //TODO: process PUT request
-        
-        return entity;
+        Party party = partyRepository.findById(id)
+            .orElseThrow(()->new RuntimeException("destino no encontrado"));
+        // Verificar si el usuario autenticado es el creador del destino
+        if (party.getUser().getId() != user.getId()) {
+            // Retornar 403 Forbidden si el usuario autenticado no es el creador
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+
+        // Eliminar el destino si la verificación es exitosa
+        partyService.deletePartyById(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    } 
+    @PutMapping("parties/{id}")
+    public ResponseEntity<Party> uploadParty(
+        @PathVariable int id, 
+        @RequestParam("title") String title,
+        @RequestParam("location") String location,
+        @RequestParam("description") String description,
+        @RequestParam("imageUrl") MultipartFile image,
+        @RequestParam("partyDate") String partyDate,
+        @RequestParam("startTime") String startTime,
+        @RequestParam("endTime") String endTime) {
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        User user = (User) authentication.getPrincipal();
+
+        Party party = partyService.findPartyById(id)
+                .orElseThrow(() -> new RuntimeException("Destino no encontrado"));
+
+        // Verificar si el usuario autenticado es el creador del destino
+        if (party.getUser().getId() != user.getId()) {
+            // Retornar 403 Forbidden si el usuario autenticado no es el creador
+            return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+        }
+        // Actualizar los campos del destino existente
+
+        // Si se proporciona una nueva imagen, actualizarla
+        /* if (image != null && !image.isEmpty()) {
+            String fileName = StringUtils.cleanPath(imageUrl.getOriginalFilename());
+            Path imagePath = Paths.get(imagesDirectory + fileName);
+            try {
+                Files.copy(imageUrl.getInputStream(), imagePath, StandardCopyOption.REPLACE_EXISTING);
+                String imageUrlString = "http://localhost:3001/images/" + fileName;
+                destination.setImageUrl(imageUrlString);
+            } catch (IOException e) {
+                e.printStackTrace();
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        } */
+        try {
+            // Usamos el servicio para manejar la lógica de negocio
+            Party saveParty = partyService.updateParty(id, title, location, description, image,partyDate,startTime, endTime, user);
+
+            // Retornar la fiesta guardada si todo va bien
+            return ResponseEntity.ok(saveParty);
+
+        } catch (Exception e) {
+            // Manejar el error y retornar una respuesta 500 si algo falla
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }  
     }
     
 
