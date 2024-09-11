@@ -1,6 +1,12 @@
 package com.shareparty.shareparty_backend.services;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.shareparty.shareparty_backend.models.Party;
 import com.shareparty.shareparty_backend.models.User;
@@ -8,15 +14,25 @@ import com.shareparty.shareparty_backend.repositories.PartyRepository;
 import com.shareparty.shareparty_backend.repositories.UserRepository;
 
 import java.util.Optional;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 @Service
 public class PartyService {
-    private PartyRepository partyRepository;
-    private UserRepository userRepository;
 
-    public PartyService(PartyRepository partyRepository){
-        this.partyRepository=partyRepository;
+    @Value("${images.directory}")
+    private String imagesDirectory;
+    private final PartyRepository partyRepository;
+    private final ImageService imageService;
+    
+    public PartyService(PartyRepository partyRepository,ImageService imageService) {
+        this.partyRepository = partyRepository;
+        this.imageService = imageService;
     }
 
     public List<Party> getParties(){
@@ -30,9 +46,30 @@ public class PartyService {
       return partyRepository.findById(id);
     }
 
-    public Party saveParty(int userId, Party party){
-        User user= userRepository.findById(userId).orElseThrow(()-> new RuntimeException("User not found"));
+    public Party saveParty(String title, String location, String description, MultipartFile image, User user) throws IOException {
+        
+        // Aquí manejas la lógica para guardar la imagen en el servidor
+        @SuppressWarnings("null")
+        String fileName = StringUtils.cleanPath(image.getOriginalFilename());
+        Path imagePath = Paths.get(imagesDirectory + fileName);
+                System.out.println(fileName);
+        try {
+            Files.copy(image.getInputStream(), imagePath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        // Cambia la URL de la imagen para incluir el dominio del backend
+        String imageUrlString = "http://localhost:3001/images/" + fileName;
+
+
+        // Crea un nuevo destino con los datos recibidos
+        Party party = new Party();
+        party.setTitle(title);
+        party.setLocation(location);
+        party.setDescription(description);
+        party.setImageUrl(imageUrlString); 
         party.setUser(user);
+
         return partyRepository.save(party);
     }
 

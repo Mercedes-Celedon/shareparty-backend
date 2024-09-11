@@ -1,6 +1,7 @@
 package com.shareparty.shareparty_backend.jwt;
 
 import org.springframework.http.HttpHeaders;
+import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -27,7 +28,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
     private final UserDetailsService userDetailsService;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException{
+    protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain)
+            throws ServletException, IOException {
         final String token = getTokenFromRequest(request);
         final String username;
 
@@ -64,5 +66,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter{
             return authHeader.substring(7);
         }
         return null;
+    }
+    @Override
+    protected boolean shouldNotFilterAsyncDispatch() {
+        return false;
+    }
+
+    @Override
+    protected boolean shouldNotFilterErrorDispatch() {
+        return false;
     }
 }
