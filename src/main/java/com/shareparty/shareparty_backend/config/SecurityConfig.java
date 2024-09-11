@@ -34,7 +34,9 @@ public class SecurityConfig {
             .cors(withDefaults())         
             .authorizeHttpRequests(authRequest -> authRequest
                 .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/parties").authenticated()
+                .requestMatchers("/parties").permitAll()
+                //.requestMatchers("/parties").authenticated()
+                .requestMatchers("/images/**").permitAll()
                 .anyRequest().authenticated()
             )
             .sessionManagement(sessionManager->
